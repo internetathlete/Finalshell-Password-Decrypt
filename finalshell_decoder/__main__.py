@@ -4,7 +4,7 @@ try:
 except Exception:
     tb = None
 
-from .gui import FinalShellGUI
+from finalshell_decoder.gui import FinalShellGUI
 
 
 def main():
