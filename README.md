@@ -70,11 +70,7 @@
 - 安装打包工具：`pip install pyinstaller`
 - 生成单文件 GUI 可执行程序（含图标与资源）：
   ```powershell
-  pyinstaller --noconfirm --clean --onefile --windowed \
-    --name FinalShellDecoder \
-    --icon finalshell_decoder/assets/icon.ico \
-    --add-data "finalshell_decoder/assets;finalshell_decoder/assets" \
-    finalshell_decoder/__main__.py
+  pyinstaller --noconfirm --clean --onefile --windowed --name FinalShellDecoder --icon finalshell_decoder/assets/icon.ico --add-data "finalshell_decoder/assets;finalshell_decoder/assets" finalshell_decoder/__main__.py
   ```
 - 输出文件：`dist/FinalShellDecoder.exe`
 - 可选：确保主题与依赖收集完整
