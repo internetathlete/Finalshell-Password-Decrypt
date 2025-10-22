@@ -1,0 +1,3 @@
+pycryptodome
+# 可选：提供统一主题与样式
+ttkbootstrap

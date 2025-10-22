@@ -1,0 +1,32 @@
+name: Feature Request
+description: 提交一个功能建议
+labels: [enhancement]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: 概要
+      description: 简要描述期望的功能
+      placeholder: 例如：支持批量导出到加密的CSV
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 背景与动机
+      placeholder: 为什么需要这个功能？解决什么问题？
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 方案描述
+      placeholder: 描述基本交互、流程或技术实现思路
+  - type: textarea
+    id: alternative
+    attributes:
+      label: 替代方案
+      placeholder: 是否有其他可行方式？
+  - type: input
+    id: env
+    attributes:
+      label: 环境信息（可选）
+      placeholder: Windows 11 / Python 3.11 / ttkbootstrap 1.x

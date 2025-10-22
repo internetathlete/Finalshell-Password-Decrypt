@@ -1,0 +1,50 @@
+name: Bug Report
+description: 报告一个问题以帮助我们改进
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 请尽可能提供完整信息，便于快速定位问题。
+  - type: input
+    id: summary
+    attributes:
+      label: 概要
+      description: 简要描述问题
+      placeholder: 例如：自动检测未识别 Program Files 下的 conn 目录
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 重现步骤
+      description: 按步骤说明如何重现问题
+      placeholder: |
+        1. 打开 GUI
+        2. 点击 自动检测并扫描
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+      placeholder: 应当识别并在列表中显示记录
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      placeholder: 实际发生了什么？是否有错误提示？
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 环境信息
+      placeholder: Windows 11 / Python 3.11 / ttkbootstrap 1.x / pycryptodome 3.x
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志与截图
+      description: 附上相关截图或日志（如有）
