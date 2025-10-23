@@ -33,6 +33,7 @@ class FinalShellGUI:
         self._setup_style()
         self._setup_icon()
         self.var_filter = tk.StringVar()
+        self.var_decode_result = tk.StringVar()
         self.items = []
         self._sort_states = {}
         self._build_ui()
@@ -56,6 +57,7 @@ class FinalShellGUI:
         style.configure('Treeview', font=('Consolas', 10), rowheight=24)
         style.configure('Treeview.Heading', font=('Segoe UI', 10, 'bold'))
         style.map('Treeview', background=[('selected', '#e6f2ff')], foreground=[('selected', '#000')])
+        style.configure('TEntry', font=('Consolas', 12))
 
     def _setup_icon(self):
         # 从包内 assets 加载图标（优先 .ico，兼容 .png）
@@ -112,8 +114,19 @@ class FinalShellGUI:
                 btn_decode.configure(style='primary.TButton')
             except Exception:
                 pass
-        self.lbl_decode_result = ttk.Label(frm_decode, text='')
-        self.lbl_decode_result.grid(row=2, column=1, sticky='w', padx=4, pady=4)
+        # 替换原角落小标签为可复制的醒目结果行
+        ttk.Label(frm_decode, text='明文密码：').grid(row=2, column=1, sticky='w', padx=4, pady=4)
+        self.entry_plain = ttk.Entry(frm_decode, textvariable=self.var_decode_result, state='readonly')
+        self.entry_plain.grid(row=2, column=2, columnspan=3, sticky='we', padx=4, pady=4)
+        btn_copy_plain = ttk.Button(frm_decode, text='复制明文', command=self.on_copy_plain_result)
+        btn_copy_plain.grid(row=2, column=5, sticky='e', padx=4, pady=4)
+        if tb is not None:
+            try:
+                btn_copy_plain.configure(style='success.TButton')
+            except Exception:
+                pass
+        # 结果行可伸缩
+        frm_decode.columnconfigure(2, weight=1)
         # 友好提示与帮助
 
         lbl_hint_pwd = ttk.Label(
@@ -149,8 +162,16 @@ class FinalShellGUI:
                 self.btn_auto.configure(style='success.TButton')
             except Exception:
                 pass
+        # 新增：选择多个 JSON 文件并添加到列表
+        self.btn_add_jsons = ttk.Button(frm_scan, text='选择 JSON 文件并扫描', command=self.on_add_json_files)
+        self.btn_add_jsons.grid(row=0, column=4, sticky='w', padx=4, pady=4)
+        if tb is not None:
+            try:
+                self.btn_add_jsons.configure(style='info.TButton')
+            except Exception:
+                pass
         self.lbl_scan_status = ttk.Label(frm_scan, text='')
-        self.lbl_scan_status.grid(row=0, column=4, sticky='w', padx=4, pady=4)
+        self.lbl_scan_status.grid(row=0, column=5, sticky='w', padx=4, pady=4)
 
         frm_scan.columnconfigure(1, weight=1)
 
@@ -267,9 +288,68 @@ class FinalShellGUI:
             return
         try:
             plain = decode_pass(b64pwd)
-            self.lbl_decode_result.configure(text=f'明文密码：{plain}')
+            self.var_decode_result.set(plain)
         except Exception as e:
-            self.lbl_decode_result.configure(text=f'解密失败：{e}')
+            self.var_decode_result.set('')
+            messagebox.showerror('错误', f'解密失败：{e}')
+
+    # 新增：选择多个 JSON 文件并添加到表格
+    def on_add_json_files(self):
+        paths = filedialog.askopenfilenames(title='选择多个 FinalShell JSON 文件', filetypes=[('JSON 文件', '*.json')])
+        if not paths:
+            return
+        added = 0
+        existing = {it.get('file') for it in self.items if it.get('file')}
+        for fp in paths:
+            if fp in existing:
+                continue
+            obj = self._safe_json_read(fp)
+            if not isinstance(obj, dict):
+                self.items.append({
+                    'file': fp,
+                    'name': None,
+                    'host': None,
+                    'port': None,
+                    'password': None,
+                    'error': 'JSON 解析失败',
+                })
+                added += 1
+                existing.add(fp)
+                continue
+            pwd_b64, host, port, user, name_in_json = self._extract_fields(obj)
+            decoded = None
+            error = None
+            if isinstance(pwd_b64, str) and pwd_b64:
+                try:
+                    decoded = decode_pass(pwd_b64)
+                except Exception as e:
+                    error = str(e)
+            else:
+                error = '未找到密码字段'
+            self.items.append({
+                'file': fp,
+                'name': name_in_json,
+                'host': host,
+                'port': port,
+                'password': decoded,
+                'error': error,
+            })
+            added += 1
+            existing.add(fp)
+        self._apply_filter_and_refresh()
+        self.lbl_scan_status.configure(text=f'新增 {added} 条记录（共 {len(self.items)} 条）')
+
+    def on_copy_plain_result(self):
+        text = (self.var_decode_result.get() or '').strip()
+        if not text:
+            messagebox.showinfo('提示', '当前没有可复制的明文密码')
+            return
+        try:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text)
+            messagebox.showinfo('提示', '已复制明文密码到剪贴板')
+        except Exception as e:
+            messagebox.showerror('错误', f'复制失败：{e}')
 
     def on_browse(self):
         path = filedialog.askdirectory(title='选择 FinalShell conn 目录')
@@ -670,11 +750,11 @@ class FinalShellGUI:
             '• Windows（Roaming）：C:\\\\Users\\\\<用户名>\\\\AppData\\\\Roaming\\\\FinalShell\\\\conn\n'
             '• Windows（Local）：C:\\\\Users\\\\<用户名>\\\\AppData\\\\Local\\\\FinalShell\\\\conn\n'
             '• Windows（安装目录）：C:\\\\Program Files\\\\FinalShell\\\\conn 或 C:\\\\Program Files (x86)\\\\FinalShell\\\\conn\n'
-            '• 有时也可能在：C:\\\\FinalShell\\\\conn\\n\\n'
+            '• 有时也可能在：C:\\\\FinalShell\\\\conn\n\n'
             '快速定位方法：\\n'
             '1. 点击窗口中的“自动检测并扫描”尝试自动定位。\\n'
             '2. 在 FinalShell 的设置/选项中查看“数据目录”。\\n'
-            '3. 手动搜索：在资源管理器搜索 *.json 并筛选包含 "host"/"password" 的文件。\\n\\n'
+            '3. 手动搜索：在资源管理器搜索 *.json 并筛选包含 "host"/"password" 的文件。\\n\n'
             '找到后，将目录路径填入上方输入框，或直接使用“手动选择并扫描”。'
         )
         lbl = ttk.Label(top, text=text, justify='left', wraplength=600)
