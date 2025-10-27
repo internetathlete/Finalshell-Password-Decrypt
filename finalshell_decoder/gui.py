@@ -28,7 +28,11 @@ class FinalShellGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title('FinalShell 密码解密')
-        self.root.geometry('1000x700')
+        self.root.geometry('1280x900')
+        try:
+            self.root.minsize(1100, 700)
+        except Exception:
+            pass
         # 优化：统一主题与样式、初始化状态
         self._setup_style()
         self._setup_icon()
@@ -773,4 +777,8 @@ if __name__ == '__main__':
     else:
         root = tk.Tk()
     app = FinalShellGUI(root)
+    try:
+        root.state('zoomed')
+    except Exception:
+        pass
     root.mainloop()
